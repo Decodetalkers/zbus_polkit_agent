@@ -1,39 +1,17 @@
+pub mod error;
 mod flags;
+mod unixsession;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, marker::PhantomData};
 use zbus::{connection, zvariant::Type};
 
 pub use flags::RegisterFlags;
+mod interface;
+use interface::*;
 
-pub trait PolkitCore: Sync + Send {
-    type State;
-    fn boot(&self) -> Self::State;
-    fn authenticate(
-        &mut self,
-        state: &mut Self::State,
-        action_id: &str,
-        msg: &str,
-        icon_name: &str,
-        details: &HashMap<&str, &str>,
-        identifies: &[Identity<'_>],
-        cookie: &str,
-    ) -> Result<(), PolkitError>;
+use zbus_polkit::policykit1::AuthorityProxy;
 
-    fn cancel_authentication(
-        &mut self,
-        state: &mut Self::State,
-        cookie: &str,
-    ) -> Result<(), PolkitError>;
-}
-
-pub struct PolkitAgentBuilder<C: PolkitCore> {
-    agent: C,
-}
-
-pub struct PolkitAgent<C: PolkitCore<State = State>, State> {
-    agent: C,
-    state: State,
-}
+use crate::unixsession::UnixSession;
 
 #[derive(Clone, Debug, zbus::DBusError)]
 #[zbus(prefix = "org.freedesktop.PolicyKit1.Error")]
@@ -44,116 +22,11 @@ pub enum PolkitError {
     NotAuthorized,
     CancellationIdNotUnique,
 }
-
 #[derive(Debug, Serialize, Deserialize, Type)]
 pub struct Identity<'a> {
     identity_kind: &'a str,
     identity_details: HashMap<&'a str, zbus::zvariant::Value<'a>>,
 }
-
-#[zbus::interface(name = "org.freedesktop.PolicyKit1.AuthenticationAgent")]
-impl<C: PolkitCore<State = State> + 'static, State> PolkitAgent<C, State>
-where
-    State: 'static + Sync + Send,
-{
-    fn begin_authentitation(
-        &mut self,
-        action_id: &str,
-        msg: &str,
-        icon_name: &str,
-        details: HashMap<&str, &str>,
-        cookie: &str,
-        identifies: Vec<Identity<'_>>,
-    ) -> Result<(), PolkitError> {
-        self.agent.authenticate(
-            &mut self.state,
-            action_id,
-            msg,
-            icon_name,
-            &details,
-            &identifies,
-            cookie,
-        )
-    }
-    fn cancel_authentication(&mut self, cookie: &str) -> Result<(), PolkitError> {
-        self.agent.cancel_authentication(&mut self.state, cookie)
-    }
-}
-
-mod seal {
-    use super::*;
-    use std::future::Future;
-    pub trait Authenticate<State> {
-        fn authenticate(
-            &self,
-            state: &mut State,
-            action_id: &str,
-            msg: &str,
-            icon_name: &str,
-            details: &HashMap<&str, &str>,
-            identifies: &[Identity<'_>],
-            cookie: &str,
-        ) -> Result<(), PolkitError>;
-    }
-    impl<F, State> Authenticate<State> for F
-    where
-        F: Fn(
-            &mut State,
-            &str,
-            &str,
-            &str,
-            &HashMap<&str, &str>,
-            &[Identity<'_>],
-            &str,
-        ) -> Result<(), PolkitError>,
-    {
-        fn authenticate(
-            &self,
-            state: &mut State,
-            action_id: &str,
-            msg: &str,
-            icon_name: &str,
-            details: &HashMap<&str, &str>,
-            identifies: &[Identity<'_>],
-            cookie: &str,
-        ) -> Result<(), PolkitError> {
-            self(
-                state, action_id, msg, icon_name, details, identifies, cookie,
-            )
-        }
-    }
-    pub trait CancelAuthentication<State> {
-        fn cancel_authentication(&self, state: &mut State, cookie: &str)
-        -> Result<(), PolkitError>;
-    }
-
-    impl<F, State> CancelAuthentication<State> for F
-    where
-        F: Fn(&mut State, &str) -> Result<(), PolkitError>,
-    {
-        fn cancel_authentication(
-            &self,
-            state: &mut State,
-            cookie: &str,
-        ) -> Result<(), PolkitError> {
-            self(state, cookie)
-        }
-    }
-
-    pub trait Boot<State> {
-        fn boot(&self) -> State;
-    }
-    impl<F, State> Boot<State> for F
-    where
-        F: Fn() -> State,
-    {
-        fn boot(&self) -> State {
-            self()
-        }
-    }
-}
-
-use seal::*;
 
 pub fn polkit_agent_instance<Authenticate, CancelAuthentication, State, Boot>(
     boot: Boot,
@@ -218,18 +91,36 @@ where
     }
 }
 
+fn locale() -> String {
+    std::env::var("LANG").unwrap_or("en_US.UTF-8".to_owned())
+}
+
 impl<State, C: PolkitCore<State = State> + 'static> PolkitAgentBuilder<C>
 where
     State: 'static + Send + Sync,
 {
-    pub async fn connect(self) -> zbus::Result<zbus::Connection> {
+    pub async fn connect(
+        self,
+        object_path: impl Into<Option<&str>>,
+    ) -> Result<zbus::Connection, error::Error> {
         let agent = PolkitAgent {
             state: self.agent.boot(),
             agent: self.agent,
         };
-        connection::Builder::system()?
-            .serve_at("/org/freedesktop/PolicyKit1/AuthenticationAgent", agent)?
+        let object_path = object_path
+            .into()
+            .unwrap_or("/org/freedesktop/PolicyKit1/AuthenticationAgent");
+        let conn_system = connection::Connection::system().await?;
+        let conn = connection::Builder::session()?
+            .serve_at(object_path, agent)?
             .build()
-            .await
+            .await?;
+
+        let session = UnixSession::new()?;
+        let auth = AuthorityProxy::builder(&conn_system).build().await?;
+        auth.register_authentication_agent(&session.into(), &locale(), object_path)
+            .await?;
+
+        Ok(conn)
     }
 }

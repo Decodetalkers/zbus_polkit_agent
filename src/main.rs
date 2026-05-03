@@ -12,17 +12,19 @@ fn authenticate(
     identifiers: &[Identity<'_>],
     cookie: &str,
 ) -> Result<(), PolkitError> {
+    println!("ggg");
     Ok(())
 }
 
 fn cancel_authentication(agent: &mut Agent, cookie: &str) -> Result<(), PolkitError> {
     Ok(())
 }
+const OBJECT_PATH: &str = "/org/waycrate/PolicyKit1/AuthenticationAgent";
 
 #[tokio::main]
 async fn main() {
     let connection = polkit_agent_instance(|| Agent, authenticate, cancel_authentication)
-        .connect()
+        .connect(OBJECT_PATH)
         .await
         .unwrap();
     println!("{:?}", connection.unique_name());
