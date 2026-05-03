@@ -28,5 +28,6 @@ async fn main() {
         .await
         .unwrap();
     println!("{:?}", connection.unique_name());
+    println!("{:?}", connection.unique_name());
     std::future::pending::<()>().await;
 }

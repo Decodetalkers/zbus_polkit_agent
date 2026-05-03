@@ -110,14 +110,13 @@ where
         let object_path = object_path
             .into()
             .unwrap_or("/org/freedesktop/PolicyKit1/AuthenticationAgent");
-        let conn_system = connection::Connection::system().await?;
-        let conn = connection::Builder::session()?
+        let conn = connection::Builder::system()?
             .serve_at(object_path, agent)?
             .build()
             .await?;
 
         let session = UnixSession::new()?;
-        let auth = AuthorityProxy::builder(&conn_system).build().await?;
+        let auth = AuthorityProxy::builder(&conn).build().await?;
         auth.register_authentication_agent(&session.into(), &locale(), object_path)
             .await?;
 
