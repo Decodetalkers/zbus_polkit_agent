@@ -2,6 +2,8 @@ pub mod agent_session;
 pub mod error;
 mod flags;
 mod unixsession;
+mod identify;
+pub use identify::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, marker::PhantomData};
 use zbus::{connection, zvariant::Type};
@@ -22,12 +24,6 @@ pub enum PolkitError {
     NotSupported,
     NotAuthorized,
     CancellationIdNotUnique,
-}
-
-#[derive(Debug, Serialize, Deserialize, Type)]
-pub struct Identity<'a> {
-    identity_kind: &'a str,
-    identity_details: HashMap<&'a str, zbus::zvariant::Value<'a>>,
 }
 
 pub fn polkit_agent_instance<Authenticate, CancelAuthentication, State, Boot>(
