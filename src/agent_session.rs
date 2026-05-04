@@ -10,9 +10,11 @@ const POLKIT_AGENT_HELPER_SOCKET: &str = "/run/polkit/agent-helper.socket";
 
 #[derive(Debug)]
 pub struct PolkitAgengSession {
-    pub user: User,
+    user: User,
     stream: UnixStream,
     complete: bool,
+    succeeded: bool,
+    cached_cookie: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -40,6 +42,7 @@ impl PolkitAgengSession {
     }
     pub fn new<'a>(uid: impl Into<Uid>, cookie: impl Into<Option<&'a str>>) -> Result<Self, Error> {
         let uid = uid.into();
+        let mut cached_cookie = None;
         let user = nix::unistd::User::from_uid(uid)?.ok_or(Error::UserNotFound(uid.as_raw()))?;
 
         let agent_path = Path::new(POLKIT_AGENT_HELPER_SOCKET);
@@ -54,13 +57,27 @@ impl PolkitAgengSession {
         if let Some(cookie) = cookie.into() {
             stream.write_all(cookie.as_bytes())?;
             stream.write_all(b"\n")?;
+            cached_cookie = Some(cookie.to_owned());
         }
 
         Ok(Self {
             user,
             stream,
+            cached_cookie,
             complete: false,
+            succeeded: false,
         })
+    }
+
+    pub fn restart(&mut self) -> Result<(), Error> {
+        self.stream.write_all(self.user.name.as_bytes())?;
+        self.stream.write_all(b"\n")?;
+
+        if let Some(cookie) = self.cached_cookie.as_ref() {
+            self.stream.write_all(cookie.as_bytes())?;
+            self.stream.write_all(b"\n")?;
+        }
+        Ok(())
     }
 
     pub fn is_complete(&self) -> bool {
@@ -68,6 +85,9 @@ impl PolkitAgengSession {
     }
 
     pub fn dispatch(&mut self) -> Result<Message, Error> {
+        if self.complete {
+            return Ok(Message::Complete(self.succeeded));
+        }
         let mut data = vec![];
         loop {
             let mut exact = [0; 1];
@@ -110,6 +130,7 @@ impl PolkitAgengSession {
 
         self.complete = true;
         if response.starts_with(SUCCESS) {
+            self.succeeded = true;
             return Ok(Message::Complete(true));
         }
         if response.starts_with(FAILURE) {
