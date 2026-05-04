@@ -1,12 +1,11 @@
 pub mod agent_session;
 pub mod error;
 mod flags;
-mod unixsession;
 mod identify;
+mod unixsession;
 pub use identify::*;
-use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, marker::PhantomData};
-use zbus::{connection, zvariant::Type};
+use zbus::connection;
 
 pub use flags::RegisterFlags;
 mod interface;
@@ -61,8 +60,8 @@ where
             action_id: &str,
             msg: &str,
             icon_name: &str,
-            details: &HashMap<&str, &str>,
-            identifies: &[Identity<'_>],
+            details: HashMap<&str, &str>,
+            identifies: Vec<Identity<'_>>,
             cookie: &str,
         ) -> Result<(), PolkitError> {
             self.authenticate.authenticate(

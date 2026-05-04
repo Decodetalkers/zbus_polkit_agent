@@ -10,8 +10,8 @@ pub trait PolkitCore: Sync + Send {
         action_id: &str,
         msg: &str,
         icon_name: &str,
-        details: &HashMap<&str, &str>,
-        identifies: &[Identity<'_>],
+        details: HashMap<&str, &str>,
+        identifies: Vec<Identity<'_>>,
         cookie: &str,
     ) -> Result<(), PolkitError>;
 
@@ -50,8 +50,8 @@ where
             action_id,
             msg,
             icon_name,
-            &details,
-            &identifies,
+            details,
+            identifies,
             cookie,
         )
     }
@@ -67,9 +67,9 @@ pub trait Authenticate<State> {
         action_id: &str,
         msg: &str,
         icon_name: &str,
-        details: &HashMap<&str, &str>,
+        details: HashMap<&str, &str>,
         cookie: &str,
-        identifies: &[Identity<'_>],
+        identifies: Vec<Identity<'_>>,
     ) -> Result<(), PolkitError>;
 }
 impl<F, State> Authenticate<State> for F
@@ -79,9 +79,9 @@ where
         &str,
         &str,
         &str,
-        &HashMap<&str, &str>,
+        HashMap<&str, &str>,
         &str,
-        &[Identity<'_>],
+        Vec<Identity<'_>>,
     ) -> Result<(), PolkitError>,
 {
     fn authenticate(
@@ -90,9 +90,9 @@ where
         action_id: &str,
         msg: &str,
         icon_name: &str,
-        details: &HashMap<&str, &str>,
+        details: HashMap<&str, &str>,
         cookie: &str,
-        identifies: &[Identity<'_>],
+        identifies: Vec<Identity<'_>>,
     ) -> Result<(), PolkitError> {
         self(
             state, action_id, msg, icon_name, details, cookie, identifies,
