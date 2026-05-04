@@ -9,8 +9,8 @@ fn authenticate(
     msg: &str,
     icon_name: &str,
     details: &HashMap<&str, &str>,
-    identifiers: &[Identity<'_>],
     cookie: &str,
+    identifiers: &[Identity<'_>],
 ) -> Result<(), PolkitError> {
     println!("ggg");
     Ok(())

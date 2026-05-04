@@ -1,3 +1,4 @@
+pub mod agent_session;
 pub mod error;
 mod flags;
 mod unixsession;
@@ -22,6 +23,7 @@ pub enum PolkitError {
     NotAuthorized,
     CancellationIdNotUnique,
 }
+
 #[derive(Debug, Serialize, Deserialize, Type)]
 pub struct Identity<'a> {
     identity_kind: &'a str,
@@ -68,7 +70,7 @@ where
             cookie: &str,
         ) -> Result<(), PolkitError> {
             self.authenticate.authenticate(
-                state, action_id, msg, icon_name, details, identifies, cookie,
+                state, action_id, msg, icon_name, details, cookie, identifies,
             )
         }
 

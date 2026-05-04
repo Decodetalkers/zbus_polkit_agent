@@ -1,3 +1,6 @@
+use crate::{Identity, PolkitError};
+use std::collections::HashMap;
+
 pub trait PolkitCore: Sync + Send {
     type State;
     fn boot(&self) -> Self::State;
@@ -57,8 +60,6 @@ where
     }
 }
 
-use super::*;
-
 pub trait Authenticate<State> {
     fn authenticate(
         &self,
@@ -67,8 +68,8 @@ pub trait Authenticate<State> {
         msg: &str,
         icon_name: &str,
         details: &HashMap<&str, &str>,
-        identifies: &[Identity<'_>],
         cookie: &str,
+        identifies: &[Identity<'_>],
     ) -> Result<(), PolkitError>;
 }
 impl<F, State> Authenticate<State> for F
@@ -79,8 +80,8 @@ where
         &str,
         &str,
         &HashMap<&str, &str>,
-        &[Identity<'_>],
         &str,
+        &[Identity<'_>],
     ) -> Result<(), PolkitError>,
 {
     fn authenticate(
@@ -90,11 +91,11 @@ where
         msg: &str,
         icon_name: &str,
         details: &HashMap<&str, &str>,
-        identifies: &[Identity<'_>],
         cookie: &str,
+        identifies: &[Identity<'_>],
     ) -> Result<(), PolkitError> {
         self(
-            state, action_id, msg, icon_name, details, identifies, cookie,
+            state, action_id, msg, icon_name, details, cookie, identifies,
         )
     }
 }
