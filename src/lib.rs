@@ -1,13 +1,11 @@
 pub mod agent_session;
 pub mod error;
-mod flags;
 mod identify;
 mod unixsession;
 pub use identify::*;
 use std::{collections::HashMap, marker::PhantomData};
 use zbus::connection;
 
-pub use flags::RegisterFlags;
 mod interface;
 use interface::*;
 
