@@ -1,7 +1,12 @@
 [package]
-name = "zbus_polkit_agent"
+name = "zbus-polkit-agent"
 version = "0.1.0"
 edition = "2024"
+license = "GPL-v3"
+keywords = ["zbus", "polkit"]
+description = "polkit-agent binding for zbus"
+authors = ["Decodertalkers <aakari@tutanota.com>"]
+repository = "https://github.com/Decodetalkers/zbus_polkit_agent"
 
 [dependencies]
 bitflags = { version = "2.11.1", features = ["serde"] }

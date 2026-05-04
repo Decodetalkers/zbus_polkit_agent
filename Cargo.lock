@@ -1365,6 +1365,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "zbus-polkit-agent"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "enumflags2",
+ "flume",
+ "nix",
+ "rpassword",
+ "serde",
+ "systemd",
+ "thiserror",
+ "tokio",
+ "zbus",
+ "zbus_polkit",
+]
+
+[[package]]
 name = "zbus_macros"
 version = "5.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1401,23 +1418,6 @@ dependencies = [
  "serde_repr",
  "static_assertions",
  "zbus",
-]
-
-[[package]]
-name = "zbus_polkit_agent"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "enumflags2",
- "flume",
- "nix",
- "rpassword",
- "serde",
- "systemd",
- "thiserror",
- "tokio",
- "zbus",
- "zbus_polkit",
 ]
 
 [[package]]
