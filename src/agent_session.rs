@@ -29,6 +29,13 @@ pub enum Response<'a> {
     Password(&'a str),
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Status {
+    Succeeded,
+    Failure,
+    Running,
+}
+
 const PAM_PROMPT_ECHO_OFF: &str = "PAM_PROMPT_ECHO_OFF";
 const PAM_PROMPT_ECHO_ON: &str = "PAM_PROMPT_ECHO_ON";
 const PAM_ERROR_MSG: &str = "PAM_ERROR_MSG";
@@ -70,6 +77,9 @@ impl PolkitAgengSession {
     }
 
     pub fn restart(&mut self) -> Result<(), Error> {
+        // reconnect
+        let stream = UnixStream::connect(POLKIT_AGENT_HELPER_SOCKET)?;
+        self.stream = stream;
         self.stream.write_all(self.user.name.as_bytes())?;
         self.stream.write_all(b"\n")?;
 
@@ -77,11 +87,29 @@ impl PolkitAgengSession {
             self.stream.write_all(cookie.as_bytes())?;
             self.stream.write_all(b"\n")?;
         }
+        self.complete = false;
+        self.succeeded = false;
         Ok(())
     }
 
+    #[inline]
     pub fn is_complete(&self) -> bool {
         self.complete
+    }
+
+    #[inline]
+    pub fn succeeded(&self) -> bool {
+        matches!(self.status(), Status::Succeeded)
+    }
+    pub fn status(&self) -> Status {
+        if !self.complete {
+            return Status::Running;
+        }
+        if self.succeeded {
+            Status::Succeeded
+        } else {
+            Status::Failure
+        }
     }
 
     pub fn dispatch(&mut self) -> Result<Message, Error> {

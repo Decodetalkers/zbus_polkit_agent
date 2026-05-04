@@ -19,17 +19,30 @@ fn authenticate(
 ) -> Result<(), PolkitError> {
     let identify: UnixUser = identifiers.remove(0).try_into().unwrap();
     let mut session = PolkitAgengSession::new(identify, cookie).unwrap();
-    while !session.is_complete() {
-        let message = session.dispatch().unwrap();
-        if let Message::Request { message, .. } = message {
-            if message.starts_with("Password:") {
-                let Ok(password) = prompt_password(format!("{} password: ", session.user_name()))
-                else {
-                    return Err(PolkitError::Failed);
-                };
-                session.response(Response::Password(&password)).unwrap();
+    let mut retry_count = 3;
+    while retry_count >= 0 {
+        while !session.is_complete() {
+            let message = session.dispatch().unwrap();
+            if let Message::Request { message, .. } = message {
+                if message.starts_with("Password:") {
+                    let Ok(password) =
+                        prompt_password(format!("{} password: ", session.user_name()))
+                    else {
+                        return Err(PolkitError::Cancelled);
+                    };
+                    session.response(Response::Password(&password)).unwrap();
+                }
             }
         }
+
+        if session.succeeded() {
+            return Ok(());
+        }
+        session.restart().unwrap();
+        retry_count -= 1;
+    }
+    if !session.succeeded() {
+        return Err(PolkitError::Failed);
     }
     Ok(())
 }
