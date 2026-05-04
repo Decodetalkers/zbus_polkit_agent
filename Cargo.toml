@@ -2,7 +2,7 @@
 name = "zbus-polkit-agent"
 version = "0.1.0"
 edition = "2024"
-license = "GPL-v3"
+license = "GPL-3.0-or-later"
 keywords = ["zbus", "polkit"]
 description = "polkit-agent binding for zbus"
 authors = ["Decodertalkers <aakari@tutanota.com>"]
