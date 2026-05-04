@@ -23,15 +23,12 @@ fn authenticate(
     while retry_count >= 0 {
         while !session.is_complete() {
             let message = session.dispatch().unwrap();
-            if let Message::Request { message, .. } = message {
-                if message.starts_with("Password:") {
-                    let Ok(password) =
-                        prompt_password(format!("{} password: ", session.user_name()))
-                    else {
-                        return Err(PolkitError::Cancelled);
-                    };
-                    session.response(Response::Password(&password)).unwrap();
-                }
+            if let Message::Request { prompt, .. } = message {
+                let Ok(password) = prompt_password(format!("{} {prompt} ", session.user_name()))
+                else {
+                    return Err(PolkitError::Cancelled);
+                };
+                session.response(Response::Password(&password)).unwrap();
             }
         }
 

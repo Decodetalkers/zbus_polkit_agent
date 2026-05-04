@@ -19,7 +19,7 @@ pub struct PolkitAgengSession {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Request { echo_on: bool, message: String },
+    Request { echo_on: bool, prompt: String },
     Error(String),
     Info(String),
     Complete(bool),
@@ -129,17 +129,17 @@ impl PolkitAgengSession {
         }
         let response = String::from_utf8_lossy(&data);
         if let Some(stripped) = response.strip_prefix(PAM_PROMPT_ECHO_OFF) {
-            let message = stripped.trim_start().to_string();
+            let prompt = stripped.trim().to_string();
             return Ok(Message::Request {
                 echo_on: false,
-                message,
+                prompt,
             });
         }
         if let Some(stripped) = response.strip_prefix(PAM_PROMPT_ECHO_ON) {
-            let message = stripped.trim_start().to_string();
+            let prompt = stripped.trim().to_string();
             return Ok(Message::Request {
                 echo_on: true,
-                message,
+                prompt,
             });
         }
 
