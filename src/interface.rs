@@ -4,11 +4,12 @@ use std::collections::HashMap;
 pub trait PolkitCore: Sync + Send {
     type State;
     fn boot(&self) -> Self::State;
+    #[allow(clippy::too_many_arguments)]
     fn authenticate(
         &mut self,
         state: &mut Self::State,
         action_id: &str,
-        msg: &str,
+        message: &str,
         icon_name: &str,
         details: HashMap<&str, &str>,
         identifies: Vec<Identity<'_>>,
@@ -61,11 +62,12 @@ where
 }
 
 pub trait Authenticate<State> {
+    #[allow(clippy::too_many_arguments)]
     fn authenticate(
         &self,
         state: &mut State,
         action_id: &str,
-        msg: &str,
+        message: &str,
         icon_name: &str,
         details: HashMap<&str, &str>,
         cookie: &str,
@@ -88,14 +90,14 @@ where
         &self,
         state: &mut State,
         action_id: &str,
-        msg: &str,
+        message: &str,
         icon_name: &str,
         details: HashMap<&str, &str>,
         cookie: &str,
         identifies: Vec<Identity<'_>>,
     ) -> Result<(), PolkitError> {
         self(
-            state, action_id, msg, icon_name, details, cookie, identifies,
+            state, action_id, message, icon_name, details, cookie, identifies,
         )
     }
 }

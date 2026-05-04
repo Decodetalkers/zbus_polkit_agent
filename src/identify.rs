@@ -121,9 +121,9 @@ pub struct UnixUser {
     pub uid: u32,
 }
 
-impl Into<Uid> for UnixUser {
-    fn into(self) -> Uid {
-        self.uid.into()
+impl From<UnixUser> for Uid {
+    fn from(val: UnixUser) -> Self {
+        val.uid.into()
     }
 }
 

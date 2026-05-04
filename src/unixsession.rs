@@ -18,10 +18,10 @@ impl UnixSession {
     }
 }
 
-impl Into<Subject> for UnixSession {
-    fn into(self) -> Subject {
+impl From<UnixSession> for Subject {
+    fn from(val: UnixSession) -> Self {
         let session_id =
-            OwnedValue::try_from(zbus::zvariant::Str::from(self.session_id.as_str())).unwrap();
+            OwnedValue::from(zbus::zvariant::Str::from(val.session_id.as_str()));
         Subject {
             subject_kind: "unix-session".to_string(),
             subject_details: HashMap::from_iter([("session-id".to_string(), session_id)]),

@@ -100,31 +100,27 @@ impl PolkitAgengSession {
             data.extend(exact);
         }
         let response = String::from_utf8_lossy(&data);
-        if response.starts_with(PAM_PROMPT_ECHO_OFF) {
-            let message = response[PAM_PROMPT_ECHO_OFF.len()..]
-                .trim_start()
-                .to_string();
+        if let Some(stripped) = response.strip_prefix(PAM_PROMPT_ECHO_OFF) {
+            let message = stripped.trim_start().to_string();
             return Ok(Message::Request {
                 echo_on: false,
                 message,
             });
         }
-        if response.starts_with(PAM_PROMPT_ECHO_ON) {
-            let message = response[PAM_PROMPT_ECHO_ON.len()..]
-                .trim_start()
-                .to_string();
+        if let Some(stripped) = response.strip_prefix(PAM_PROMPT_ECHO_ON) {
+            let message = stripped.trim_start().to_string();
             return Ok(Message::Request {
                 echo_on: true,
                 message,
             });
         }
 
-        if response.starts_with(PAM_ERROR_MSG) {
-            let message = response[PAM_ERROR_MSG.len()..].trim_start().to_string();
+        if let Some(stripped) = response.strip_prefix(PAM_ERROR_MSG) {
+            let message = stripped.trim_start().to_string();
             return Ok(Message::Error(message));
         }
-        if response.starts_with(PAM_TEXT_INFO) {
-            let message = response[PAM_TEXT_INFO.len()..].trim_start().to_string();
+        if let Some(stripped) = response.strip_prefix(PAM_TEXT_INFO) {
+            let message = stripped.trim_start().to_string();
             return Ok(Message::Info(message));
         }
 
