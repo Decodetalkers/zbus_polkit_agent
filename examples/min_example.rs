@@ -28,7 +28,11 @@ fn authenticate(
                 else {
                     return Err(PolkitError::Cancelled);
                 };
-                session.response(Response::Password(&password)).unwrap();
+                session
+                    .response(Response {
+                        password: &password,
+                    })
+                    .unwrap();
             }
         }
 

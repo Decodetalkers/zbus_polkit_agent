@@ -25,8 +25,10 @@ pub enum Message {
     Complete(bool),
 }
 
-pub enum Response<'a> {
-    Password(&'a str),
+/// Response the password
+#[derive(Debug)]
+pub struct Response<'a> {
+    pub password: &'a str,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -163,13 +165,9 @@ impl PolkitAgengSession {
         Err(Error::UnknownMessage(response.to_string()))
     }
 
-    pub fn response<'a>(&mut self, response: Response<'a>) -> Result<(), Error> {
-        match response {
-            Response::Password(password) => {
-                self.stream.write_all(password.as_bytes())?;
-                self.stream.write_all(b"\n")?;
-            }
-        }
+    pub fn response<'a>(&mut self, Response { password }: Response<'a>) -> Result<(), Error> {
+        self.stream.write_all(password.as_bytes())?;
+        self.stream.write_all(b"\n")?;
         Ok(())
     }
 }
