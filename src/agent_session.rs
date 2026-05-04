@@ -9,7 +9,7 @@ use std::{
 const POLKIT_AGENT_HELPER_SOCKET: &str = "/run/polkit/agent-helper.socket";
 
 #[derive(Debug)]
-pub struct PolkitAgengSession {
+pub struct PolkitAgentSession {
     user: User,
     stream: UnixStream,
     complete: bool,
@@ -45,7 +45,7 @@ const PAM_TEXT_INFO: &str = "PAM_TEXT_INFO";
 const SUCCESS: &str = "SUCCESS";
 const FAILURE: &str = "FAILURE";
 
-impl PolkitAgengSession {
+impl PolkitAgentSession {
     pub fn user_name(&self) -> &str {
         self.user.name.as_ref()
     }

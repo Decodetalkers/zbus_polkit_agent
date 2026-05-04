@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rpassword::prompt_password;
 use zbus_polkit_agent::{
     Identity, PolkitError, UnixUser,
-    agent_session::{Message, PolkitAgengSession, Response},
+    agent_session::{Message, PolkitAgentSession, Response},
     polkit_agent_instance,
 };
 struct Agent;
@@ -18,7 +18,7 @@ fn authenticate(
     mut identifiers: Vec<Identity<'_>>,
 ) -> Result<(), PolkitError> {
     let identify: UnixUser = identifiers.remove(0).try_into().unwrap();
-    let mut session = PolkitAgengSession::new(identify, cookie).unwrap();
+    let mut session = PolkitAgentSession::new(identify, cookie).unwrap();
     let mut retry_count = 3;
     while retry_count >= 0 {
         while !session.is_complete() {
