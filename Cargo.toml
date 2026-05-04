@@ -9,9 +9,6 @@ authors = ["Decodertalkers <aakari@tutanota.com>"]
 repository = "https://github.com/Decodetalkers/zbus_polkit_agent"
 
 [dependencies]
-bitflags = { version = "2.11.1", features = ["serde"] }
-enumflags2 = { version = "0.7.12", features = ["serde"] }
-flume = "0.12.0"
 nix = { version = "0.31.2", features = ["process", "user"] }
 
 serde = { version = "1.0.228", features = ["derive"] }
