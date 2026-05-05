@@ -23,7 +23,7 @@ async fn authenticate(
     let mut retry_count = 3;
     while retry_count >= 0 {
         while !session.is_complete() {
-            let message = session.dispatch()?;
+            let message = session.async_dispatch().await?;
             if let Message::Request { prompt, .. } = message {
                 let Ok(password) = prompt_password(format!("{} {prompt} ", session.user_name()))
                 else {
