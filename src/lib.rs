@@ -77,11 +77,7 @@ where
             )
         }
 
-        fn cancel_authentication(
-            &mut self,
-            state: &mut State,
-            cookie: &str,
-        ) -> Result<(), Error> {
+        fn cancel_authentication(&mut self, state: &mut State, cookie: &str) -> Result<(), Error> {
             self.cancel_authentication
                 .cancel_authentication(state, cookie)
         }
