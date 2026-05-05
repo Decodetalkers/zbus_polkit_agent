@@ -13,15 +13,25 @@ use zbus_polkit::policykit1::AuthorityProxy;
 
 use crate::unixsession::UnixSession;
 
-#[derive(Clone, Debug, zbus::DBusError)]
-#[zbus(prefix = "org.freedesktop.PolicyKit1.Error")]
-pub enum PolkitError {
-    Failed,
-    Cancelled,
-    NotSupported,
-    NotAuthorized,
-    CancellationIdNotUnique,
+pub mod server {
+    #[derive(Clone, Debug, zbus::DBusError)]
+    #[zbus(prefix = "org.freedesktop.PolicyKit1.Error")]
+    pub enum Error {
+        Failed,
+        FailedReason(String),
+        Cancelled,
+        NotSupported,
+        NotAuthorized,
+        CancellationIdNotUnique,
+    }
+
+    impl From<crate::error::Error> for Error {
+        fn from(value: crate::error::Error) -> Self {
+            Self::FailedReason(value.to_string())
+        }
+    }
 }
+use server::Error;
 
 pub fn polkit_agent_instance<Authenticate, CancelAuthentication, State, Boot>(
     boot: Boot,
@@ -61,7 +71,7 @@ where
             details: HashMap<&str, &str>,
             identifies: Vec<Identity<'_>>,
             cookie: &str,
-        ) -> Result<(), PolkitError> {
+        ) -> Result<(), Error> {
             self.authenticate.authenticate(
                 state, action_id, msg, icon_name, details, cookie, identifies,
             )
@@ -71,7 +81,7 @@ where
             &mut self,
             state: &mut State,
             cookie: &str,
-        ) -> Result<(), PolkitError> {
+        ) -> Result<(), Error> {
             self.cancel_authentication
                 .cancel_authentication(state, cookie)
         }

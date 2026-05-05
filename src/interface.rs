@@ -1,4 +1,5 @@
-use crate::{Identity, PolkitError};
+use crate::Identity;
+use crate::server::Error;
 use std::collections::HashMap;
 
 pub trait PolkitCore: Sync + Send {
@@ -14,13 +15,10 @@ pub trait PolkitCore: Sync + Send {
         details: HashMap<&str, &str>,
         identifies: Vec<Identity<'_>>,
         cookie: &str,
-    ) -> Result<(), PolkitError>;
+    ) -> Result<(), Error>;
 
-    fn cancel_authentication(
-        &mut self,
-        state: &mut Self::State,
-        cookie: &str,
-    ) -> Result<(), PolkitError>;
+    fn cancel_authentication(&mut self, state: &mut Self::State, cookie: &str)
+    -> Result<(), Error>;
 }
 
 pub struct PolkitAgentBuilder<C: PolkitCore> {
@@ -45,7 +43,7 @@ where
         details: HashMap<&str, &str>,
         cookie: &str,
         identifies: Vec<Identity<'_>>,
-    ) -> Result<(), PolkitError> {
+    ) -> Result<(), Error> {
         self.agent.authenticate(
             &mut self.state,
             action_id,
@@ -56,7 +54,7 @@ where
             cookie,
         )
     }
-    fn cancel_authentication(&mut self, cookie: &str) -> Result<(), PolkitError> {
+    fn cancel_authentication(&mut self, cookie: &str) -> Result<(), Error> {
         self.agent.cancel_authentication(&mut self.state, cookie)
     }
 }
@@ -72,7 +70,7 @@ pub trait Authenticate<State> {
         details: HashMap<&str, &str>,
         cookie: &str,
         identifies: Vec<Identity<'_>>,
-    ) -> Result<(), PolkitError>;
+    ) -> Result<(), Error>;
 }
 impl<F, State> Authenticate<State> for F
 where
@@ -84,7 +82,7 @@ where
         HashMap<&str, &str>,
         &str,
         Vec<Identity<'_>>,
-    ) -> Result<(), PolkitError>,
+    ) -> Result<(), Error>,
 {
     fn authenticate(
         &self,
@@ -95,21 +93,21 @@ where
         details: HashMap<&str, &str>,
         cookie: &str,
         identifies: Vec<Identity<'_>>,
-    ) -> Result<(), PolkitError> {
+    ) -> Result<(), Error> {
         self(
             state, action_id, message, icon_name, details, cookie, identifies,
         )
     }
 }
 pub trait CancelAuthentication<State> {
-    fn cancel_authentication(&self, state: &mut State, cookie: &str) -> Result<(), PolkitError>;
+    fn cancel_authentication(&self, state: &mut State, cookie: &str) -> Result<(), Error>;
 }
 
 impl<F, State> CancelAuthentication<State> for F
 where
-    F: Fn(&mut State, &str) -> Result<(), PolkitError>,
+    F: Fn(&mut State, &str) -> Result<(), Error>,
 {
-    fn cancel_authentication(&self, state: &mut State, cookie: &str) -> Result<(), PolkitError> {
+    fn cancel_authentication(&self, state: &mut State, cookie: &str) -> Result<(), Error> {
         self(state, cookie)
     }
 }
