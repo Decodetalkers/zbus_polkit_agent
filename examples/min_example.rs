@@ -24,14 +24,29 @@ async fn authenticate(
     while retry_count >= 0 {
         while !session.is_complete() {
             let message = session.async_dispatch().await?;
-            if let Message::Request { prompt, .. } = message {
-                let Ok(password) = prompt_password(format!("{} {prompt} ", session.user_name()))
-                else {
-                    return Err(Error::Cancelled);
-                };
-                session.response(Response {
-                    password: &password,
-                })?;
+            match message {
+                Message::Error(error) => {
+                    // maybe what happened to polkit?
+                    println!("error: {error}");
+                }
+                Message::Info(info) => {
+                    // often tell you what happened to this account,
+                    // for example
+                    // The account is locked due to 3 failed logins.
+                    // (10 minutes left to unlock)
+                    println!("info: {info}");
+                }
+                Message::Request { prompt, .. } => {
+                    let Ok(password) =
+                        prompt_password(format!("{} {prompt} ", session.user_name()))
+                    else {
+                        return Err(Error::Cancelled);
+                    };
+                    session.response(Response {
+                        password: &password,
+                    })?;
+                }
+                _ => {}
             }
         }
 
