@@ -9,13 +9,14 @@ use std::collections::HashMap;
 
 use rpassword::prompt_password;
 use zbus_polkit_agent::{
-    Identity, PolkitError, UnixUser,
-    agent_session::{Message, PolkitAgengSession, Response},
+    Identity, UnixUser,
+    agent_session::{Message, PolkitAgentSession, Response},
     polkit_agent_instance,
+    server::Error,
 };
 struct Agent;
 
-fn authenticate(
+async fn authenticate(
     _agent: &mut Agent,
     _action_id: &str,
     _msg: &str,
@@ -23,22 +24,21 @@ fn authenticate(
     _details: HashMap<&str, &str>,
     cookie: &str,
     mut identifiers: Vec<Identity<'_>>,
-) -> Result<(), PolkitError> {
+) -> Result<(), Error> {
     let identify: UnixUser = identifiers.remove(0).try_into()?;
-    let mut session = PolkitAgengSession::new(identify, cookie)?;
+    let mut session = PolkitAgentSession::new(identify, cookie)?;
     let mut retry_count = 3;
     while retry_count >= 0 {
         while !session.is_complete() {
-            let message = session.dispatch()?;
+            let message = session.async_dispatch().await?;
             if let Message::Request { prompt, .. } = message {
                 let Ok(password) = prompt_password(format!("{} {prompt} ", session.user_name()))
                 else {
-                    return Err(PolkitError::Cancelled);
+                    return Err(Error::Cancelled);
                 };
-                session
-                    .response(Response {
-                        password: &password,
-                    })?;
+                session.response(Response {
+                    password: &password,
+                })?;
             }
         }
 
@@ -49,12 +49,12 @@ fn authenticate(
         retry_count -= 1;
     }
     if !session.succeeded() {
-        return Err(PolkitError::Failed);
+        return Err(Error::Failed);
     }
     Ok(())
 }
 
-fn cancel_authentication(_agent: &mut Agent, _cookie: &str) -> Result<(), PolkitError> {
+async fn cancel_authentication(_agent: &mut Agent, _cookie: &str) -> Result<(), Error> {
     Ok(())
 }
 const OBJECT_PATH: &str = "/org/waycrate/PolicyKit1/AuthenticationAgent";
