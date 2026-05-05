@@ -24,12 +24,12 @@ fn authenticate(
     cookie: &str,
     mut identifiers: Vec<Identity<'_>>,
 ) -> Result<(), PolkitError> {
-    let identify: UnixUser = identifiers.remove(0).try_into().unwrap();
-    let mut session = PolkitAgengSession::new(identify, cookie).unwrap();
+    let identify: UnixUser = identifiers.remove(0).try_into()?;
+    let mut session = PolkitAgengSession::new(identify, cookie)?;
     let mut retry_count = 3;
     while retry_count >= 0 {
         while !session.is_complete() {
-            let message = session.dispatch().unwrap();
+            let message = session.dispatch()?;
             if let Message::Request { prompt, .. } = message {
                 let Ok(password) = prompt_password(format!("{} {prompt} ", session.user_name()))
                 else {
@@ -38,15 +38,14 @@ fn authenticate(
                 session
                     .response(Response {
                         password: &password,
-                    })
-                    .unwrap();
+                    })?;
             }
         }
 
         if session.succeeded() {
             return Ok(());
         }
-        session.restart().unwrap();
+        session.restart()?;
         retry_count -= 1;
     }
     if !session.succeeded() {
