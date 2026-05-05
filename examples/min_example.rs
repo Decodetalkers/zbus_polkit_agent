@@ -9,7 +9,7 @@ use zbus_polkit_agent::{
 };
 struct Agent;
 
-fn authenticate(
+async fn authenticate(
     _agent: &mut Agent,
     _action_id: &str,
     _msg: &str,
@@ -47,7 +47,7 @@ fn authenticate(
     Ok(())
 }
 
-fn cancel_authentication(_agent: &mut Agent, _cookie: &str) -> Result<(), Error> {
+async fn cancel_authentication(_agent: &mut Agent, _cookie: &str) -> Result<(), Error> {
     Ok(())
 }
 const OBJECT_PATH: &str = "/org/waycrate/PolicyKit1/AuthenticationAgent";
