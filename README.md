@@ -74,7 +74,6 @@ The interface design is inspired by iced, but then it makes it hard for me to us
 Now you can use iced to build your own polkit agent
 
 ## TODO
-* Async
 * Documents
 * Etc
 
