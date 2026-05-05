@@ -7,7 +7,13 @@ use zbus_polkit_agent::{
     polkit_agent_instance,
     server::Error,
 };
-struct Agent;
+
+struct UnSyncAbleValue;
+
+#[allow(unused)]
+struct Agent {
+    moved_value: UnSyncAbleValue,
+}
 
 async fn authenticate(
     _agent: &mut Agent,
@@ -69,9 +75,14 @@ const OBJECT_PATH: &str = "/org/waycrate/PolicyKit1/AuthenticationAgent";
 
 #[tokio::main]
 async fn main() {
-    let _connection = polkit_agent_instance(|| Agent, authenticate, cancel_authentication)
-        .connect(OBJECT_PATH)
-        .await
-        .unwrap();
+    let moved_value = UnSyncAbleValue;
+    let _connection = polkit_agent_instance(
+        move || Agent { moved_value },
+        authenticate,
+        cancel_authentication,
+    )
+    .connect(OBJECT_PATH)
+    .await
+    .unwrap();
     std::future::pending::<()>().await;
 }
