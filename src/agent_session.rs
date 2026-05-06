@@ -131,19 +131,7 @@ impl PolkitAgentSession {
         let uid = uid.into();
         let user = nix::unistd::User::from_uid(uid)?.ok_or(Error::UserNotFound(uid.as_raw()))?;
         self.user = user;
-        // reconnect
-        let stream = UnixStream::connect(POLKIT_AGENT_HELPER_SOCKET)?;
-        self.stream = stream;
-        self.stream.write_all(self.user.name.as_bytes())?;
-        self.stream.write_all(b"\n")?;
-
-        if let Some(cookie) = self.cached_cookie.as_ref() {
-            self.stream.write_all(cookie.as_bytes())?;
-            self.stream.write_all(b"\n")?;
-        }
-        self.complete = false;
-        self.succeeded = false;
-        Ok(())
+        self.restart()
     }
 
     #[inline]
