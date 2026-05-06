@@ -126,6 +126,26 @@ impl PolkitAgentSession {
         Ok(())
     }
 
+    /// Be used to switch user
+    pub fn restart_with_uid(&mut self, uid: impl Into<Uid>) -> Result<(), Error> {
+        let uid = uid.into();
+        let user = nix::unistd::User::from_uid(uid)?.ok_or(Error::UserNotFound(uid.as_raw()))?;
+        self.user = user;
+        // reconnect
+        let stream = UnixStream::connect(POLKIT_AGENT_HELPER_SOCKET)?;
+        self.stream = stream;
+        self.stream.write_all(self.user.name.as_bytes())?;
+        self.stream.write_all(b"\n")?;
+
+        if let Some(cookie) = self.cached_cookie.as_ref() {
+            self.stream.write_all(cookie.as_bytes())?;
+            self.stream.write_all(b"\n")?;
+        }
+        self.complete = false;
+        self.succeeded = false;
+        Ok(())
+    }
+
     #[inline]
     pub fn is_complete(&self) -> bool {
         self.complete
