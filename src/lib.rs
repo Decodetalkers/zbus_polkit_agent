@@ -15,6 +15,7 @@ use crate::unixsession::UnixSession;
 
 pub mod reexport {
     pub use zbus::Connection;
+    pub use nix::unistd::User;
 }
 
 pub mod server {

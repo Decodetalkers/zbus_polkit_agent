@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::Error;
-use nix::unistd::Uid;
+use nix::unistd::{Uid, User};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::Type;
 #[derive(Debug, Serialize, Deserialize, Type)]
@@ -119,6 +119,13 @@ impl<'a> TryInto<UnixNetGroup> for Identity<'a> {
 #[derive(Debug, Clone, Copy)]
 pub struct UnixUser {
     pub uid: u32,
+}
+
+impl UnixUser {
+    pub fn user(&self) -> Result<User, Error> {
+        let uid = self.uid.into();
+        nix::unistd::User::from_uid(uid)?.ok_or(Error::UserNotFound(uid.as_raw()))
+    }
 }
 
 impl From<UnixUser> for Uid {
