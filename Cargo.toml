@@ -13,6 +13,7 @@ nix = { version = "0.31.2", features = ["process", "user"] }
 
 serde = { version = "1.0.228", features = ["derive"] }
 systemd = "0.10.1"
+libsystemd-sys = "0.9.4"
 thiserror = "2.0.18"
 zbus = "5.15.0"
 zbus_polkit = "5.0.0"
