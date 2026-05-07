@@ -25,10 +25,9 @@ unsafe fn free_cstring(ptr: *mut c_char) -> Option<String> {
     Some(s)
 }
 
-pub fn get_display(uid: Option<uid_t>) -> Result<String, systemd::Error> {
+pub fn get_display(uid: uid_t) -> Result<String, systemd::Error> {
     let mut c_session: *mut c_char = ptr::null_mut();
-    let u: uid_t = uid.unwrap_or(0);
-    systemd::ffi_result(unsafe { libsystemd_sys::login::sd_uid_get_display(u, &mut c_session) })?;
+    systemd::ffi_result(unsafe { libsystemd_sys::login::sd_uid_get_display(uid, &mut c_session) })?;
     let ss = unsafe { free_cstring(c_session).unwrap() };
     Ok(ss)
 }
@@ -41,7 +40,7 @@ impl UnixSession {
             return Ok(Self { session_id });
         }
         let uid = systemd::login::get_owner_uid(Some(id.as_raw()))?;
-        let session_id = get_display(Some(uid))?;
+        let session_id = get_display(uid)?;
 
         Ok(Self { session_id })
     }
