@@ -1315,6 +1315,7 @@ dependencies = [
 name = "zbus-polkit-agent"
 version = "0.4.2"
 dependencies = [
+ "libsystemd-sys",
  "nix",
  "rpassword",
  "serde",
